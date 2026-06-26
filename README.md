@@ -74,67 +74,74 @@
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        USER'S LOCAL MACHINE                            │
-│                                                                        │
-│   ┌──────────────────┐     ┌──────────────────┐                        │
-│   │   Flask Web UI   │     │   CLI (manager.py)│                        │
-│   │   (port 5000)    │     │                   │                        │
-│   └────────┬─────────┘     └────────┬──────────┘                        │
-│            │                         │                                   │
-│            └──────────┬──────────────┘                                   │
-│                       │                                                  │
-│              ┌────────▼────────┐                                         │
-│              │   Boto3 SDK     │                                         │
-│              │  (aws_deploy.py)│                                         │
-│              └────────┬────────┘                                         │
-└───────────────────────┼──────────────────────────────────────────────────┘
-                        │ AWS API
-                        ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         AWS CLOUD (us-east-1)                           │
-│                                                                        │
-│   ┌─────────────────────────────────────────────────────────────┐       │
-│   │                  EC2 Instance (t2.micro)                     │       │
-│   │                  Amazon Linux 2023                           │       │
-│   │                                                              │       │
-│   │   ┌─────────────────── Docker Compose ──────────────────┐    │       │
-│   │   │                                                      │    │       │
-│   │   │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐   │    │       │
-│   │   │  │  Gitea   │  │ Jenkins  │  │  Node Exporter   │   │    │       │
-│   │   │  │  :3000   │  │  :8080   │  │     :9100        │   │    │       │
-│   │   │  └──────────┘  └──────────┘  └────────┬─────────┘   │    │       │
-│   │   │                                        │             │    │       │
-│   │   │  ┌──────────┐  ┌──────────┐  ┌────────▼─────────┐   │    │       │
-│   │   │  │ Grafana  │  │  Nginx   │  │   Prometheus     │   │    │       │
-│   │   │  │  :3001   │  │   :80    │  │     :9090        │   │    │       │
-│   │   │  └──────────┘  └──────────┘  └────────┬─────────┘   │    │       │
-│   │   │                                        │             │    │       │
-│   │   │  ┌───────────────┐  ┌──────────────────▼──────────┐  │    │       │
-│   │   │  │ Telegram Bot  │◄─│     Alertmanager            │  │    │       │
-│   │   │  │   :8000       │  │       :9093                 │  │    │       │
-│   │   │  └──────┬────────┘  └──────────────┬──────────────┘  │    │       │
-│   │   │         │                           │                │    │       │
-│   │   └─────────┼───────────────────────────┼────────────────┘    │       │
-│   │             │                           │                     │       │
-│   └─────────────┼───────────────────────────┼─────────────────────┘       │
-│                 │                           │                             │
-└─────────────────┼───────────────────────────┼─────────────────────────────┘
-                  │                           │
-                  ▼                           ▼
-          ┌──────────────┐           ┌──────────────┐
-          │   Telegram   │           │    Gmail     │
-          │  @CloudBot   │           │  SMTP Alert  │
-          └──────────────┘           └──────────────┘
+```mermaid
+flowchart TD
+    %% User's Local Machine
+    subgraph LocalMachine ["🖥️ USER'S LOCAL MACHINE"]
+        direction TB
+        UI["🌐 Flask Web UI<br/>(port 5000)"]
+        CLI["💻 CLI<br/>(manager.py)"]
+        SDK["📦 Boto3 SDK<br/>(aws_deploy.py)"]
+        
+        UI --> SDK
+        CLI --> SDK
+    end
+
+    %% AWS Cloud
+    subgraph AWSCloud ["☁️ AWS CLOUD (us-east-1)"]
+        direction TB
+        subgraph EC2 ["⚡ EC2 Instance (t2.micro) - Amazon Linux 2023"]
+            direction TB
+            subgraph Docker ["🐳 Docker Compose"]
+                direction TB
+                
+                Gitea["📘 Gitea :3000"]
+                Jenkins["🛠️ Jenkins :8080"]
+                NodeExporter["📈 Node Exporter :9100"]
+                
+                Grafana["📊 Grafana :3001"]
+                Nginx["🔀 Nginx :80"]
+                Prometheus["🔍 Prometheus :9090"]
+                
+                TelegramBot["🤖 Telegram Bot :8000"]
+                Alertmanager["🚨 Alertmanager :9093"]
+                
+                NodeExporter --> Prometheus
+                Prometheus --> Alertmanager
+                Alertmanager --> TelegramBot
+            end
+        end
+    end
+
+    %% Connections
+    SDK -- "AWS API" --> AWSCloud
+
+    TelegramApp["📱 Telegram @CloudBot"]
+    Gmail["📧 Gmail SMTP Alert"]
+
+    TelegramBot -.->|"Webhook"| TelegramApp
+    Alertmanager -.->|"SMTP"| Gmail
+
+    %% Styling
+    classDef cloud fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef local fill:#e6f3ff,stroke:#333,stroke-width:2px;
+    classDef external fill:#f0fff0,stroke:#333,stroke-width:2px;
+    
+    class AWSCloud cloud;
+    class LocalMachine local;
+    class TelegramApp,Gmail external;
 ```
 
 ### Alert Flow
 
-```
-Node Exporter ──► Prometheus ──► Alert Rules ──► Alertmanager ──┬──► Gmail (Email)
-  (metrics)       (scrape)       (evaluate)      (route)        │
-                                                                └──► Telegram Bot ──► Telegram App
+```mermaid
+flowchart LR
+    NE["Node Exporter<br/>(metrics)"] -->|"scrape"| Prom["Prometheus"]
+    Prom -->|"evaluate"| AR["Alert Rules"]
+    AR -->|"route"| AM["Alertmanager"]
+    AM -->|"email"| GM["Gmail"]
+    AM -->|"webhook"| TB["Telegram Bot"]
+    TB --> App["Telegram App"]
 ```
 
 ---
