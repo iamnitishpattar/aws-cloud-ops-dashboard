@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Computing Dashboard</title>
+    <!-- Use Bootstrap for a clean UI quickly -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+        
+        body {
+            background-color: #ffffff;
+            color: #1a1a1a;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #bubbleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .dashboard-wrapper {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Light modern nav */
+        .navbar {
+            background: rgba(255, 255, 255, 0.8) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: 0.5px;
+            color: #1a1a1a !important;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .navbar-brand::before {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #4285f4 0%, #a5b4fc 100%);
+            border-radius: 50%;
+        }
+
+        /* Headings */
+        h2, h3, h5, h6 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #1a1a1a;
+        }
+
+        /* Clean light card styling */
+        .card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 18px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        .instance-card {
+            margin-bottom: 24px;
+        }
+
+        .instance-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            border-color: rgba(66, 133, 244, 0.3);
+            box-shadow: 0 12px 30px rgba(66, 133, 244, 0.1);
+        }
+
+        .instance-card.border-success {
+            border-color: rgba(52, 211, 153, 0.4) !important;
+        }
+
+        .instance-card.border-success:hover {
+            box-shadow: 0 12px 30px rgba(52, 211, 153, 0.15);
+        }
+
+        /* Text and link formatting */
+        .card-title {
+            color: #1a1a1a !important;
+        }
+
+        .text-success {
+            color: #059669 !important;
+        }
+
+        .badge.bg-success {
+            background: #10b981 !important;
+            color: #ffffff;
+            padding: 0.4em 0.8em;
+            border-radius: 8px;
+        }
+
+        .badge.bg-secondary {
+            background: #f1f5f9 !important;
+            border: 1px solid #e2e8f0;
+            color: #64748b !important;
+            padding: 0.4em 0.8em;
+            border-radius: 8px;
+        }
+
+        a {
+            color: #4285f4;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        a:hover {
+            color: #1a73e8;
+            text-decoration: underline;
+        }
+
+        hr {
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        /* Buttons custom styling */
+        .btn-success {
+            background: #10b981;
+            color: #ffffff;
+            border: none;
+            font-weight: 600;
+            padding: 0.6rem 1.4rem;
+            border-radius: 30px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #ffffff;
+            border: none;
+            font-weight: 600;
+            padding: 0.6rem 1.4rem;
+            border-radius: 30px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-outline-info {
+            color: #4285f4;
+            border-color: rgba(66, 133, 244, 0.3);
+            font-weight: 600;
+            border-radius: 30px;
+            padding: 0.4rem 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-info:hover {
+            background: rgba(66, 133, 244, 0.08);
+            border-color: #4285f4;
+            color: #1a73e8;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline-danger {
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+            font-weight: 600;
+            border-radius: 30px;
+            padding: 0.4rem 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-danger:hover {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: #ef4444;
+            transform: translateY(-1px);
+        }
+
+        /* Inputs & forms */
+        .form-select {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #1a1a1a;
+            border-radius: 30px;
+            padding-left: 1.25rem;
+            padding-right: 2.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            border-color: #4285f4;
+            box-shadow: 0 0 0 0.25rem rgba(66, 133, 244, 0.2);
+        }
+
+        /* Metrics Display */
+        .metrics-box {
+            background-color: rgba(241, 245, 249, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        /* Alerts design */
+        .alert-info {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            color: #0369a1;
+            border-radius: 14px;
+        }
+
+        .alert-danger {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            border-radius: 14px;
+        }
+
+        /* Spinner custom color */
+        .spinner-border {
+            color: #4285f4 !important;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bubbleCanvas"></canvas>
+    
+    <div class="dashboard-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container">
+                <a class="navbar-brand" href="#">Cloud Computing Dashboard</a>
+            </div>
+        </nav>
+
+<div class="container mt-5">
+    
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        <strong>Error:</strong> {{ error }}<br>
+        <em>Ensure your .env file is configured correctly with AWS credentials.</em>
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col d-flex justify-content-between align-items-center">
+            <h2>Active Instances</h2>
+            <div class="d-flex align-items-center gap-2">
+                <select class="form-select fw-bold text-primary" id="softwareTemplate" style="width: auto;">
+                    <option value="jenkins">⚙️ Jenkins CI/CD</option>
+                    <option value="wordpress">🌍 WordPress Blog</option>
+                    <option value="minecraft">🎮 Minecraft Server</option>
+                    <option value="gitea">🐙 Gitea (GitHub Clone)</option>
+                    <option value="wireguard">🛡️ WireGuard VPN</option>
+                    <option value="full_stack">🌟 Full Stack Enterprise (CI/CD + Monitoring)</option>
+                </select>
+                <button class="btn btn-success" id="deployBtn" onclick="deployInstance()">🚀 Deploy New Instance</button>
+                <button class="btn btn-danger" id="terminateAllBtn" onclick="terminateInstance('all')">🗑️ Terminate All</button>
+            </div>
+        </div>
+    </div>
+    <div id="deployStatus" class="text-end text-primary mb-3 fw-bold"></div>
+
+    <!-- Active Instances Section -->
+    <div class="row" id="activeInstanceContainer">
+        {% if active_instances %}
+            {% for instance in active_instances %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card instance-card shadow-sm border-success">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">{{ instance.name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.8em;">ID: {{ instance.id }}</h6>
+                        <p class="card-text">
+                            <strong>Status:</strong> 
+                            <span class="badge bg-success">{{ instance.state }}</span>
+                            <br>
+                            <strong>IP Address:</strong> 
+                            {% if instance.ip != 'N/A' %}
+                                {% if 'jenkins' in instance.name|lower %}
+                                    <a href="http://{{ instance.ip }}:8080" target="_blank">{{ instance.ip }}:8080</a>
+                                {% elif 'gitea' in instance.name|lower %}
+                                    <a href="http://{{ instance.ip }}:3000" target="_blank">{{ instance.ip }}:3000</a>
+                                {% elif 'wireguard' in instance.name|lower %}
+                                    <a href="http://{{ instance.ip }}:51821" target="_blank">{{ instance.ip }}:51821</a>
+                                {% elif 'full_stack' in instance.name|lower %}
+                                    <br>
+                                    <a href="http://{{ instance.ip }}:3000" target="_blank" class="btn btn-sm btn-outline-primary">🐙 Gitea</a>
+                                    <a href="http://{{ instance.ip }}:8080" target="_blank" class="btn btn-sm btn-outline-primary">⚙️ Jenkins</a>
+                                    <a href="http://{{ instance.ip }}:3001" target="_blank" class="btn btn-sm btn-outline-primary">📊 Grafana</a>
+                                    <a href="http://{{ instance.ip }}:9090" target="_blank" class="btn btn-sm btn-outline-warning">🔥 Prometheus</a>
+                                    <a href="http://{{ instance.ip }}:9093" target="_blank" class="btn btn-sm btn-outline-danger">🚨 Alertmanager</a>
+                                {% else %}
+                                    <a href="http://{{ instance.ip }}" target="_blank">{{ instance.ip }}</a>
+                                {% endif %}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
+                        <hr>
+                        <button class="btn btn-sm btn-outline-info" onclick="monitorInstance('{{ instance.id }}')">📊 Monitor</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="terminateInstance('{{ instance.id }}')">Stop</button>
+                        
+                        <div class="metrics-box" id="metrics-{{ instance.id }}" style="display: none;">
+                            <small>Loading metrics...</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col mb-4">
+                <div class="alert alert-info shadow-sm">No active instances found. Click "Deploy New Instance" above to start!</div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Terminated Instances Section -->
+    {% if terminated_instances %}
+    <div class="row mt-4">
+        <div class="col">
+            <h3 class="text-muted border-bottom pb-2 mb-4">Terminated History</h3>
+        </div>
+    </div>
+    <div class="row" id="terminatedInstanceContainer" style="opacity: 0.6;">
+        {% for instance in terminated_instances %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card instance-card bg-light mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-muted">{{ instance.name }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.8em;">ID: {{ instance.id }}</h6>
+                    <p class="card-text text-muted">
+                        <strong>Status:</strong> <span class="badge bg-secondary">{{ instance.state }}</span><br>
+                        <strong>IP Address:</strong> N/A
+                    </p>
+                    <hr>
+                    <button class="btn btn-sm btn-secondary" disabled>📊 Monitor</button>
+                    <button class="btn btn-sm btn-secondary" disabled>Stop</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    async function deployInstance() {
+        const btn = document.getElementById('deployBtn');
+        const status = document.getElementById('deployStatus');
+        const template = document.getElementById('softwareTemplate').value;
+        
+        btn.disabled = true;
+        status.innerHTML = `<div class="spinner-border spinner-border-sm" role="status"></div> Deploying ${template} instance... This takes about 30 seconds.`;
+        
+        try {
+            const response = await fetch('/deploy', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ template: template })
+            });
+            const data = await response.json();
+            if(data.status === 'success') {
+                alert('Instance deployed successfully! Page will refresh.');
+                window.location.reload();
+            } else {
+                alert('Deployment failed: ' + data.message);
+                btn.disabled = false;
+                btn.innerHTML = '🚀 Deploy New Instance';
+            }
+        } catch (e) {
+            alert('Error connecting to server.');
+            btn.disabled = false;
+            btn.innerHTML = '🚀 Deploy New Instance';
+        }
+    }
+
+    async function terminateInstance(id) {
+        if(!confirm(`Are you sure you want to terminate ${id === 'all' ? 'ALL instances' : 'instance ' + id}?`)) return;
+        
+        try {
+            const response = await fetch(`/terminate/${id}`, { method: 'POST' });
+            const data = await response.json();
+            if(data.status === 'success') {
+                alert('Termination initiated! Page will refresh.');
+                window.location.reload();
+            } else {
+                alert('Termination failed: ' + data.message);
+            }
+        } catch (e) {
+            alert('Error connecting to server.');
+        }
+    }
+
+    async function monitorInstance(id) {
+        const box = document.getElementById(`metrics-${id}`);
+        box.style.display = 'block';
+        box.innerHTML = '<small>Loading metrics from CloudWatch...</small>';
+        
+        try {
+            const response = await fetch(`/monitor/${id}`);
+            const data = await response.json();
+            if(data.status === 'success') {
+                const m = data.metrics;
+                
+                // If AWS hasn't collected data yet
+                if (m.cpu === "No data available yet") {
+                    box.innerHTML = `<small class="text-warning"><strong>No data yet!</strong> AWS CloudWatch takes about 5 minutes to collect the first data points for a brand new server. Please wait a few minutes and click Monitor again.</small>`;
+                    return;
+                }
+
+                // Render real graphical charts
+                box.innerHTML = `
+                    <hr>
+                    <div class="row text-center mt-3 mb-2">
+                        <div class="col-6">
+                            <canvas id="cpuChart-${id}" style="max-height: 120px;"></canvas>
+                            <small class="fw-bold mt-1 d-block" style="color: #1a1a1a;">CPU: ${m.cpu}%</small>
+                        </div>
+                        <div class="col-6">
+                            <canvas id="netChart-${id}" style="max-height: 120px;"></canvas>
+                            <small class="fw-bold mt-1 d-block" style="color: #1a1a1a;">Network (Bytes)</small>
+                        </div>
+                    </div>
+                `;
+
+                // Draw CPU Doughnut Chart
+                new Chart(document.getElementById(`cpuChart-${id}`), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Used CPU', 'Free CPU'],
+                        datasets: [{
+                            data: [parseFloat(m.cpu), 100 - parseFloat(m.cpu)],
+                            backgroundColor: ['#10b981', '#e2e8f0'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        cutout: '75%', 
+                        plugins: { legend: { display: false } } 
+                    }
+                });
+
+                // Draw Network Bar Chart
+                new Chart(document.getElementById(`netChart-${id}`), {
+                    type: 'bar',
+                    data: {
+                        labels: ['In', 'Out'],
+                        datasets: [{
+                            data: [parseFloat(m.net_in), parseFloat(m.net_out)],
+                            backgroundColor: ['#4285f4', '#94a3b8'],
+                            borderRadius: 4
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { 
+                            y: { beginAtZero: true, ticks: { display: false } },
+                            x: { grid: { display: false } }
+                        } 
+                    }
+                });
+            } else {
+                box.innerHTML = `<small class="text-danger">Error: ${data.message}</small>`;
+            }
+        } catch (e) {
+            box.innerHTML = `<small class="text-danger">Error fetching metrics.</small>`;
+        }
+    }
+</script>
+
+<script>
+    // Authentic Antigravity Light Theme Starburst Galaxy
+    const canvas = document.getElementById('bubbleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetRotationX = 0;
+    let targetRotationY = 0;
+    let currentRotationX = 0;
+    let currentRotationY = 0;
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const numParticles = 2500; // Increased particle count for full screen coverage
+
+    // Distribute points evenly on a sphere, and scatter many outward
+    const goldenRatio = (1 + Math.sqrt(5)) / 2;
+    for (let i = 0; i < numParticles; i++) {
+        const theta = 2 * Math.PI * i / goldenRatio;
+        const phi = Math.acos(1 - 2 * (i + 0.5) / numParticles);
+        
+        // 3D coordinates on unit sphere
+        let x = Math.cos(theta) * Math.sin(phi);
+        let y = Math.sin(theta) * Math.sin(phi);
+        let z = Math.cos(phi);
+        
+        // **SCATTER EFFECT**: 
+        // Keep a dense core, but scatter particles far outward to cover the whole screen!
+        let dist = 1;
+        if (Math.random() > 0.3) {
+            // 70% of particles scatter far out across the background
+            dist = 1 + Math.pow(Math.random(), 3) * 6; // Extends up to 7x the radius!
+        }
+        
+        particles.push({
+            origX: x * dist, 
+            origY: y * dist, 
+            origZ: z * dist,
+            length: Math.random() * 8 + 6,
+            width: Math.random() * 1.5 + 1
+        });
+    }
+
+    // Mouse interaction for rotation
+    window.addEventListener('mousemove', (e) => {
+        // Map mouse position to rotation angles
+        mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        
+        targetRotationY = mouseX * Math.PI * 0.4; // Yaw
+        targetRotationX = mouseY * Math.PI * 0.4; // Pitch
+    });
+
+    function rotate3D(x, y, z, pitch, yaw) {
+        let cosX = Math.cos(pitch), sinX = Math.sin(pitch);
+        let y1 = y * cosX - z * sinX;
+        let z1 = y * sinX + z * cosX;
+        
+        let cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+        let x2 = x * cosY + z1 * sinY;
+        let z2 = -x * sinY + z1 * cosY;
+        
+        return { x: x2, y: y1, z: z2 };
+    }
+
+    function getParticleColor(screenX, screenY) {
+        // Calculate color based on actual screen position to match the Antigravity gradient perfectly
+        // Left is Blue, Top is Orange, Right is Red, Bottom is Purple
+        const weightX = Math.max(0, Math.min(1, screenX / canvas.width)); 
+        const weightY = Math.max(0, Math.min(1, screenY / canvas.height)); 
+        
+        // Top edge (Blue on left, Orange/Yellow on right)
+        const topR = 66 * (1-weightX) + 250 * weightX;
+        const topG = 133 * (1-weightX) + 180 * weightX;
+        const topB = 244 * (1-weightX) + 50 * weightX;
+        
+        // Bottom edge (Blue on left, Red/Purple on right)
+        const botR = 66 * (1-weightX) + 234 * weightX;
+        const botG = 133 * (1-weightX) + 67 * weightX;
+        const botB = 244 * (1-weightX) + 53 * weightX;
+        
+        // Interpolate Y
+        const finalR = botR * (1-weightY) + topR * weightY;
+        const finalG = botG * (1-weightY) + topG * weightY;
+        const finalB = botB * (1-weightY) + topB * weightY;
+
+        return `rgb(${finalR}, ${finalG}, ${finalB})`;
+    }
+
+    let autoRotationY = 0;
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Fill pure white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Smooth rotation
+        currentRotationX += (targetRotationX - currentRotationX) * 0.05;
+        currentRotationY += (targetRotationY - currentRotationY) * 0.05;
+        autoRotationY += 0.002; // slow constant spin
+
+        // Center the core on the left side of the screen
+        const cx = canvas.width * 0.15;
+        const cy = canvas.height * 0.55;
+        
+        // Base radius for the core
+        const sphereRadius = Math.max(canvas.width, canvas.height) * 0.4;
+
+        let projected = particles.map(p => {
+            let rot = rotate3D(p.origX, p.origY, p.origZ, currentRotationX, currentRotationY + autoRotationY);
+            return {
+                ...p,
+                x: rot.x, y: rot.y, z: rot.z
+            };
+        });
+        
+        projected.sort((a, b) => a.z - b.z);
+
+        projected.forEach(p => {
+            const scale = sphereRadius * (p.z * 0.15 + 1);
+            const drawX = cx + p.x * scale;
+            const drawY = cy + p.y * scale;
+
+            // Draw a dash pointing outward from center
+            const dist = Math.sqrt(p.x*p.x + p.y*p.y) || 1;
+            const endX = drawX + (p.x/dist) * p.length * (p.z * 0.15 + 1);
+            const endY = drawY + (p.y/dist) * p.length * (p.z * 0.15 + 1);
+
+            let alpha = p.z > 0 ? 0.9 : 0.1 + (p.z + 1) * 0.4;
+            
+            // Fade out the center dramatically to look hollow like the original
+            const distanceFromCenter2D = Math.sqrt(p.x*p.x + p.y*p.y);
+            if (distanceFromCenter2D < 0.4) {
+                alpha *= (distanceFromCenter2D / 0.4);
+            }
+            
+            // Fade out particles that go WAY off screen to save rendering
+            if (drawX < -200 || drawX > canvas.width + 200 || drawY < -200 || drawY > canvas.height + 200) {
+                return;
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(drawX, drawY);
+            ctx.lineTo(endX, endY);
+            
+            // Color based on screen position
+            ctx.strokeStyle = getParticleColor(drawX, drawY);
+            
+            ctx.globalAlpha = Math.max(0, alpha * 0.8);
+            ctx.lineWidth = p.width;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        });
+        
+        ctx.globalAlpha = 1.0;
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+</script>
+
+</div>
+</body>
+</html>
