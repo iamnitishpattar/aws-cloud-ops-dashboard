@@ -121,15 +121,6 @@ flowchart TD
 
     TelegramBot -.->|"Webhook"| TelegramApp
     Alertmanager -.->|"SMTP"| Gmail
-
-    %% Styling
-    classDef cloud fill:#f9f9f9,stroke:#333,stroke-width:2px;
-    classDef local fill:#e6f3ff,stroke:#333,stroke-width:2px;
-    classDef external fill:#f0fff0,stroke:#333,stroke-width:2px;
-    
-    class AWSCloud cloud;
-    class LocalMachine local;
-    class TelegramApp,Gmail external;
 ```
 
 ### Alert Flow
