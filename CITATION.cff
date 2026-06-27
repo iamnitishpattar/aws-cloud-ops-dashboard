@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software or reference this architecture in your work, please cite it using the following metadata."
+authors:
+  - family-names: "Pattar"
+    given-names: "Nitish"
+title: "Automated Deployment and Monitoring of Cloud Instances Using AWS, Docker, and Infrastructure as Code"
+version: 1.0.0
+date-released: 2026-06-27
+url: "https://github.com/iamnitishpattar/aws-cloud-ops-dashboard"
+repository-code: "https://github.com/iamnitishpattar/aws-cloud-ops-dashboard"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.20958233"
+    description: "The Zenodo DOI for the associated research paper."
+keywords:
+  - "Cloud Computing"
+  - "AWS"
+  - "Docker"
+  - "Terraform"
+  - "Infrastructure as Code"
+  - "Prometheus"
+  - "Grafana"
+  - "DevOps"
