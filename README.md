@@ -8,10 +8,11 @@
 ![Terraform](https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform&logoColor=white)
 ![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
 ![Grafana](https://img.shields.io/badge/Grafana-Dashboards-F46800?style=for-the-badge&logo=grafana&logoColor=white)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20958233-blue?style=for-the-badge)](https://doi.org/10.5281/zenodo.20958233)
 
 **An enterprise-grade cloud infrastructure platform that automates deployment, monitoring, and alerting of AWS EC2 instances with a single click.**
 
-[Features](#-features) • [Architecture](#-architecture) • [Quick Start](#-quick-start) • [Usage](#-usage) • [Monitoring & Alerting](#-monitoring--alerting) • [Terraform IaC](#-infrastructure-as-code-terraform)
+[Features](#-features) • [Architecture](#-architecture) • [Research Paper](#-research-paper) • [Quick Start](#-quick-start) • [Usage](#-usage) • [Monitoring & Alerting](#-monitoring--alerting) • [Terraform IaC](#-infrastructure-as-code-terraform)
 
 <br>
 
@@ -31,6 +32,7 @@
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
 - [Prerequisites](#-prerequisites)
+- [Research Paper](#-research-paper)
 - [Quick Start](#-quick-start)
 - [Usage](#-usage)
   - [Web Dashboard](#-web-dashboard-recommended)
@@ -445,6 +447,20 @@ This project is designed with student/developer budgets in mind:
 | **Grafana login** | Default credentials: `admin` / `admin` |
 | **No alert emails** | Verify Gmail App Password; check Alertmanager logs: `sudo docker logs fullstack-alertmanager-1` |
 | **No Telegram alerts** | Ensure you sent `/start` to the bot first |
+
+---
+
+## 📜 Research Paper
+
+This project is backed by a formally published research paper detailing the architecture, implementation, and performance benchmarking.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20958233.svg)](https://doi.org/10.5281/zenodo.20958233)
+
+**Title:** Automated Deployment and Monitoring of Cloud Instances Using AWS, Docker, and Infrastructure as Code<br>
+**Author:** Nitish Pattar<br>
+**DOI:** [10.5281/zenodo.20958233](https://doi.org/10.5281/zenodo.20958233)
+
+You can read the full version of the paper included in this repository: [research_paper.html](research_paper.html) or [research_paper.pdf](research_paper.pdf).
 
 ---
 
